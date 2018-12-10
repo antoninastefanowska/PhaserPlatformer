@@ -19,11 +19,9 @@ var config = {
 var game = new Phaser.Game(config);
 var player;
 var cursors;
-var prevVelocityY;
 var debugText;
 
 function preload() {
-    //this.stage.backgroundColor = '#48a';
     this.load.image('background', 'assets/background-1.png');
     this.load.spritesheet('player', 'assets/girl-2.png', { frameWidth: 99, frameHeight: 74});
 }
@@ -34,7 +32,7 @@ function create() {
     debugText = this.add.text(16, 16, '', { fontSize: '32px', fill: '#000' });
     
     player = this.physics.add.sprite(100, 450, 'player');
-    player.setCollideWorldBounds(true);
+    player.setCollideWorldBounds(true); 
     player.setActive(true);
 
     this.anims.create({
@@ -103,7 +101,4 @@ function update() {
             player.anims.play('fall', true);
         }
     }
-    
-    if (cursors.down.isDown)
-        debugText.setText('prev: ' + Math.round(prevVelocityY) + ' curr: ' + Math.round(player.body.velocity.y));
 }
