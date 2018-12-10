@@ -1,12 +1,12 @@
 var config = {
     type: Phaser.AUTO,
-    width: 800,
+    width: 1600,
     height: 600,
     physics: {
         default: 'arcade',
         arcade: {
             gravity: { y: 300 },
-            debug: false
+            debug: true
         }
     },
     scene: {
@@ -20,9 +20,13 @@ var game = new Phaser.Game(config);
 var player;
 var cursors;
 var debugText;
+var map;
+var layer;
 
 function preload() {
     this.load.image('background', 'assets/background-1.png');
+    this.load.image('tiles', 'assets/tileset-1.png');
+    this.load.tilemapTiledJSON('map', 'assets/map.json');
     this.load.spritesheet('player', 'assets/girl-2.png', { frameWidth: 99, frameHeight: 74});
 }
 
@@ -31,9 +35,19 @@ function create() {
 
     debugText = this.add.text(16, 16, '', { fontSize: '32px', fill: '#000' });
     
+    map = this.add.tilemap('map');
+    var tileset = map.addTilesetImage('kafelki', 'tiles');
+    //layer = map.getLayer('floor');
+    //debugText.setText(tileset.image);
+    //layer.resizeWorld();
+    layer = map.createStaticLayer('layer', tileset);
+    //debugText.setText(layer.name);
+    //layer.resizeWorld();
+
     player = this.physics.add.sprite(100, 450, 'player');
     player.setCollideWorldBounds(true); 
     player.setActive(true);
+    //player.setAnchor(0.5);
 
     this.anims.create({
         key: 'idle',
@@ -97,7 +111,7 @@ function update() {
         if (Math.round(player.body.velocity.y) < 0) {
             player.anims.play('jump', true);
         }
-        else if (Math.round(player.body.velocity.y) > 0) {
+        else {
             player.anims.play('fall', true);
         }
     }
