@@ -37,12 +37,12 @@ class GameScene extends Phaser.Scene
     {
         this.createWorld();
         this.createPlayer();
-        this.createEnemy();
+        this.createHUD();        
+        this.createEnemies();
         this.createKeys();    
         this.createTreasures();
         this.createFireplaces();
         //this.createPlatforms();
-        this.createHUD();        
     }
 
     createWorld()
@@ -127,13 +127,9 @@ class GameScene extends Phaser.Scene
         this.zKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.Z);
     }
 
-    createEnemy()
+    createEnemies()
     {       
-        this.enemy = this.physics.add.sprite(405, 450, 'enemy_1');
-        
-        this.enemy.setCollideWorldBounds(true);
-        this.enemy.setActive(true);
-        this.enemy.setImmovable(true);
+        this.enemies = this.add.group();
         
         this.anims.create({
             key: 'enemy_run',
@@ -148,21 +144,33 @@ class GameScene extends Phaser.Scene
             frameRate: 10,
             repeat: 0
         });
-    
-        this.walls = this.physics.add.staticGroup();
-    
-        this.leftwall = this.walls.create(400, 538, 'invisible-wall');
-        this.rightwall = this.walls.create(600, 538, 'invisible-wall');
-        this.enemy.setVelocity(100);
-        this.physics.add.overlap(this.enemy, this.leftwall, this.enemyTurnRight, null, this);
-        this.physics.add.overlap(this.enemy, this.rightwall, this.enemyTurnLeft, null, this);
-        
-        this.enemyPlayerCollider = this.physics.add.collider(this.enemy, this.player, this.touchEnemy, null, this);
-        this.enemy.anims.play('enemy_run');
-        this.leftwall.visible = false;
-        this.rightwall.visible = false;
 
-        this.enemy.on('animationcomplete', this.animationEnemyDieComplete, this);
+        this.walls = this.physics.add.staticGroup();
+        this.addEnemy(405, 600, 'enemy_1', 400, 600);
+    }
+
+    addEnemy(x, y, spriteKey, walkStart, walkEnd)
+    {
+        var enemy, walls, leftwall, rightwall;
+        enemy = this.physics.add.sprite(x, y, spriteKey).setOrigin(0.5, 1);
+        
+        enemy.setCollideWorldBounds(true);
+        enemy.setActive(true);
+        enemy.setImmovable(true);
+
+        leftwall = this.walls.create(walkStart, y, 'invisible-wall').setOrigin(1);
+        rightwall = this.walls.create(walkEnd, y, 'invisible-wall').setOrigin(1);
+        this.physics.add.overlap(leftwall, enemy, this.enemyTurnRight, null, this);
+        this.physics.add.overlap(rightwall, enemy, this.enemyTurnLeft, null, this);
+
+        enemy.setVelocity(100);
+        enemy.anims.play('enemy_run');
+        leftwall.visible = false;
+        rightwall.visible = false;
+        enemy.enabled = true;
+        enemy.on('animationcomplete', this.animationEnemyDieComplete, this);
+
+        this.physics.add.collider(this.player, enemy, this.touchEnemy, null, this);
     }
 
     createKeys()
@@ -301,53 +309,56 @@ class GameScene extends Phaser.Scene
         }
     }
     
-    enemyTurnLeft()
+    enemyTurnLeft(wall, enemy)
     {
-        this.enemy.setVelocityX(-100);
-        this.enemy.scaleX = -1;
-        this.enemy.setOffset(78, 0);
+        enemy.setVelocityX(-100);
+        enemy.scaleX = -1;
+        enemy.setOffset(78, 0);
     }
     
-    enemyTurnRight()
+    enemyTurnRight(wall, enemy)
     {
-        this.enemy.setVelocityX(100);
-        this.enemy.scaleX = 1;
-        this.enemy.setOffset(0, 0);
+        enemy.setVelocityX(100);
+        enemy.scaleX = 1;
+        enemy.setOffset(0, 0);
     }
     
-    touchEnemy()
+    touchEnemy(player, enemy)
     {
-        this.hitSound.play();
-        if (this.enemy.body.touching.up && this.player.body.touching.down)
+        if (enemy.enabled)
         {
-            this.enemy.anims.play('enemy_die');   
-            this.score += 50;
-            this.scoreText.setText(this.score);
-            this.enemy.setVelocityX(0);
-            this.enemy.setVelocityY(-50);
-            this.player.setVelocityY(-280);
-            this.enemyPlayerCollider.destroy();
-        }
-        else
-        {
-            this.loseHealth();
-            //this.player.setTint(0xff0000);
-            /*
-            this.player.anims.play('hurt');
-            if (this.player.body.touching.left)
+            this.hitSound.play();
+            if (enemy.body.touching.up && player.body.touching.down)
             {
-                this.player.setVelocityX(200);
-                this.player.setAccelerationX(-200);
+                enemy.anims.play('enemy_die');   
+                this.score += 50;
+                this.scoreText.setText(this.score);
+                enemy.setVelocityX(0);
+                enemy.setVelocityY(-50);
+                player.setVelocityY(-280);
+                enemy.enabled = false;
             }
-            
-            else if (this.player.body.touching.right)
+            else
             {
-                this.player.setVelocityX(-200);
-                this.player.setAccelerationX(200);
-            } */
-            //this.physics.pause();
-            //this.player.setTint(0xff0000);
-            //this.gameOver = true;
+                this.loseHealth();
+                //this.player.setTint(0xff0000);
+                /*
+                this.player.anims.play('hurt');
+                if (this.player.body.touching.left)
+                {
+                    this.player.setVelocityX(200);
+                    this.player.setAccelerationX(-200);
+                }
+                
+                else if (this.player.body.touching.right)
+                {
+                    this.player.setVelocityX(-200);
+                    this.player.setAccelerationX(200);
+                } */
+                //this.physics.pause();
+                //this.player.setTint(0xff0000);
+                //this.gameOver = true;
+            }
         }
     }
 
