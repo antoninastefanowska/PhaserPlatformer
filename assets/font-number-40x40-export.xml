@@ -1,8 +1,8 @@
 <font>
-	<info face="C:\Users\HP\Desktop\gra\assets\font-number-40x40-export" size="80" />
+	<info face="font-number-40x40-export" size="80" />
 	<common lineHeight="80" scaleW="127" scaleH="108" pages="1" />
 	<pages>
-		<page id="0" file="C:\Users\HP\Desktop\gra\assets\font-number-40x40-export.png" />
+		<page id="0" file="font-number-40x40-export.png" />
 	</pages>
 	<chars count="12">
 		<char id="48" x="35" y="36" width="34" height="35" xoffset="0" yoffset="45" xadvance="35" /><!-- 0 -->
