@@ -30,23 +30,27 @@ class GameScene extends Phaser.Scene
         this.load.spritesheet('enemy_2', 'assets/mini-tyranausor-2.png', {frameWidth: 80, frameHeight: 62});
         this.load.spritesheet('enemy_3', 'assets/plant-1.png', {frameWidth: 135, frameHeight: 85});
 
+        this.load.image('standard-font', 'assets/font.png');
         this.load.bitmapFont('number-font', 'assets/font-number-40x40-export.png', 'assets/font-number-40x40-export.xml');
 
         this.load.audio('music', 'assets/theme-1.ogg');
-        this.load.audio('hit', 'assets/hit-1.wav')
+        this.load.audio('hit-1', 'assets/hit-1.wav');
+        this.load.audio('hit-2', 'assets/hit-2.wav')
+        this.load.audio('wood-1', 'assets/wood-1.wav');
+        this.load.audio('wood-2', 'assets/wood-2.wav');
     }
     
     create() 
     {
         this.createWorld();
-        this.createPlayer();
-        this.createHUD();        
+        this.createPlayer();  
         this.createEnemies();
         this.createKeys();    
         this.createTreasures();
         this.createFireplaces();
         this.createBumpers();
         this.createFragileBlocks();
+        this.createHUD();
         //this.createPlatforms();
     }
 
@@ -89,7 +93,7 @@ class GameScene extends Phaser.Scene
     createWorld()
     {
         this.background = this.add.tileSprite(800, 300, 1600, 600, 'background');
-        this.background.setScrollFactor(0.1);
+        this.background.setScrollFactor(0.2);
         
         this.cameras.main.setBounds(0, 0, 4800, 600);
         this.map = this.add.tilemap('map');
@@ -120,9 +124,9 @@ class GameScene extends Phaser.Scene
         this.player.body.offset.y = 0;
         this.player.baseOffset = this.player.body.offset.x;
 
-        this.hitSound = this.sound.add('hit');
+        this.hitSound1 = this.sound.add('hit-1');
+        this.hitSound2 = this.sound.add('hit-2');
         this.cameras.main.startFollow(this.player);
-        //this.physics.add.collider(this.layer, this.player);
 
         this.physics.add.collider(this.player, this.layer3);
         this.physics.add.collider(this.player, this.layer);
@@ -176,8 +180,18 @@ class GameScene extends Phaser.Scene
         this.scoreText = this.add.bitmapText(16, 40, 'number-font', '0');
         this.scoreText.setScrollFactor(0);
 
+        var config = {
+            image: 'standard-font',
+            width: 40,
+            height: 40,
+            chars: Phaser.GameObjects.RetroFont.TEXT_SET1,
+            charsPerRow: 15
+        };
+        this.cache.bitmapFont.add('standard-font', Phaser.GameObjects.RetroFont.Parse(this, config));
+
         this.add.image(16, 150, 'key').setOrigin(0).setScale(1.5).setScrollFactor(0);
-        this.keyText = this.add.text(70, 140, 'x 0', {fontSize: '32px', fill: '#000'});
+        //this.keyText = this.add.text(70, 140, 'x 0', {fontSize: '32px', fill: '#000'});
+        this.keyText = this.add.bitmapText(70, 140, 'standard-font', '0');
         this.keyText.setScrollFactor(0);
 
         this.add.image(30, 26, 'health-bar-background').setOrigin(0).setScale(1.6).setScrollFactor(0);
@@ -249,7 +263,7 @@ class GameScene extends Phaser.Scene
         /* 520 - wysokość podłogi */
         this.addEnemy(400, 600, 530, 'enemy_1');
         this.addEnemy(1000, 1300, 530, 'enemy_3', 80);
-        this.addEnemy(1400, 2000, 530, 'enemy_2', 64);
+        this.addEnemy(1400, 1900, 530, 'enemy_2', 64);
 
         /* ================== */
         this.physics.add.collider(this.player, this.enemies, this.touchEnemy, null, this);
@@ -401,6 +415,10 @@ class GameScene extends Phaser.Scene
 
     createFragileBlocks()
     {
+        this.stepIdx = 0;
+        this.woodSteps = [];
+        this.woodSteps[0] = this.sound.add('wood-1');
+        this.woodSteps[1] = this.sound.add('wood-2');
         this.fragileBlocks = this.add.group();
 
         this.anims.create({
@@ -461,7 +479,7 @@ class GameScene extends Phaser.Scene
     {
         if (enemy.enabled)
         {
-            this.hitSound.play();
+            this.hitSound1.play();
             if (enemy.body.touching.up && player.body.touching.down)
             {
                 enemy.anims.play(enemy.spriteKey + '_die');   
@@ -498,7 +516,7 @@ class GameScene extends Phaser.Scene
 
     touchObstacle()
     {
-        this.hitSound.play();
+        this.hitSound1.play();
         this.loseHealth();
     }
 
@@ -506,12 +524,12 @@ class GameScene extends Phaser.Scene
     {
         if (this.zKey.isDown && this.collectedKeys > 0 && treasure.enabled)
         {
-            this.hitSound.play();
+            this.hitSound2.play();
             this.collectedKeys--;
             treasure.anims.play('treasure_open');
             this.score += 1000;
             this.scoreText.setText(this.score);
-            this.keyText.setText('x ' + this.collectedKeys);
+            this.keyText.setText(this.collectedKeys);
             treasure.enabled = false;
         } 
     }
@@ -520,7 +538,7 @@ class GameScene extends Phaser.Scene
     {
         if (this.zKey.isDown && fireplace.enabled && this.healthPoints < 32)
         {
-            this.hitSound.play();
+            this.hitSound2.play();
             this.gainHealth();
             fireplace.anims.play('fire-empty');
             fireplace.setOffset(0, -23);
@@ -532,7 +550,7 @@ class GameScene extends Phaser.Scene
     {
         if (bumper.body.touching.up && player.body.touching.down)
         {
-            this.hitSound.play();
+            this.hitSound2.play();
             player.setVelocityY(-500);
             bumper.anims.play('bumper-jump');
         }
@@ -542,6 +560,11 @@ class GameScene extends Phaser.Scene
     {
         if (fragileBlock.enabled && fragileBlock.body.touching.up && player.body.touching.down)
         {
+            if (!this.woodSteps[this.stepIdx].isPlaying)
+            {
+                this.stepIdx = (this.stepIdx + 1) % this.woodSteps.length;
+                this.woodSteps[this.stepIdx].play();
+            }
             fragileBlock.anims.play('block-destroy');
             fragileBlock.enabled = false;
         }
@@ -556,18 +579,15 @@ class GameScene extends Phaser.Scene
     animationBlockDestroyComplete(animation, frame, fragileBlock)
     {
         if (animation.key == 'block-destroy')
-        {
-            this.hitSound.play();
             fragileBlock.disableBody(true, true);
-        }
     }
     
     collectKey(player, key)
     {
-        this.hitSound.play();
+        this.hitSound2.play();
         key.disableBody(true, true); 
         this.collectedKeys++;
-        this.keyText.setText('x ' + this.collectedKeys);
+        this.keyText.setText(this.collectedKeys);
         /*
         if (this.keys.countActive(true) === 0)
         {
