@@ -264,6 +264,10 @@ class GameScene extends Phaser.Scene
         this.addEnemy(400, 600, 530, 'enemy_1');
         this.addEnemy(1000, 1300, 530, 'enemy_3', 80);
         this.addEnemy(1400, 1900, 530, 'enemy_2', 64);
+        this.addEnemy(2400, 2700, 530, 'enemy_3', 80);
+        this.addEnemy(3000, 3500, 530, 'enemy_2', 64);
+        this.addEnemy(3700, 3900, 530, 'enemy_1');
+        this.addEnemy (4100, 4300, 530, 'enemy_2', 64);
 
         /* ================== */
         this.physics.add.collider(this.player, this.enemies, this.touchEnemy, null, this);
@@ -308,6 +312,10 @@ class GameScene extends Phaser.Scene
         /* generowanie kluczy */
         this.addKey(500, 530);
         this.addKey(1200, 150);
+        this.addKey (1500, 150);
+        this.addKey(2500, 530);
+        this.addKey(3600, 530);
+        this.addKey (4150, 530);
         
         /* ================== */
         this.physics.add.overlap(this.player, this.keys, this.collectKey, null, this);
@@ -335,6 +343,10 @@ class GameScene extends Phaser.Scene
         /* generowanie skarbów */
         this.addTreasure(300, 530);
         this.addTreasure(1500, 530);
+        this.addTreasure(1100, 530);
+        this.addTreasure(2250, 530);
+        this.addTreasure(3100, 160);
+        this.addTreasure(4450, 530);
 
         /* =================== */
         this.physics.add.overlap(this.player, this.treasures, this.touchTreasure, null, this);
@@ -369,6 +381,7 @@ class GameScene extends Phaser.Scene
         });
         /* generowanie ognisk */
         this.addFireplace(200, 530);
+        this.addFireplace(2950, 530); 
 
         /* ================== */
         this.physics.add.overlap(this.player, this.fireplaces, this.touchFireplace, null, this);
@@ -398,6 +411,7 @@ class GameScene extends Phaser.Scene
         });
         /* generowanie skoczni */
         this.addBumper(900, 530);
+        this.addBumper(3450, 530);
 
         /* =================== */
         this.physics.add.collider(this.player, this.bumpers, this.touchBumper, null, this);
@@ -640,7 +654,7 @@ var config = {
         default: 'arcade',
         arcade: {
             gravity: { y: 300 },
-            debug: true
+            debug: false
         }
     },
     scene: [GameScene]
