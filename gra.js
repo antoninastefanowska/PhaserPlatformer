@@ -1,3 +1,108 @@
+class WelcomeScene extends Phaser.Scene
+{
+    constructor()
+    {
+        super({key: 'WelcomeScene'});
+    }
+
+    preload()
+    {
+        this.load.image('sky', 'assets/sky-1.png');
+        this.load.image('clouds', 'assets/cloud-1.png');
+        this.load.image('background-2', 'assets/background-2.png');
+        this.load.image('standard-font-2', 'assets/font-20x20.png');
+        this.load.image('title-font', 'assets/title-font.png');       
+        this.load.audio('welcome-music', 'assets/theme-2.ogg');
+    }
+
+    create()
+    {
+        this.music = this.sound.add('welcome-music', {loop: true});
+        this.music.play();
+
+        this.sky = this.add.image(400, 300, 'sky');
+
+        this.clouds = [];
+        this.clouds[0] = this.physics.add.sprite(0, 0, 'clouds');
+        this.clouds[0].setOrigin(0);
+        this.clouds[0].body.setAllowGravity(false);
+        this.clouds[0].setVelocityX(-100);
+
+        this.clouds[1] = this.physics.add.sprite(800, 0, 'clouds');
+        this.clouds[1].setOrigin(0);
+        this.clouds[1].body.setAllowGravity(false);
+        this.clouds[1].setVelocityX(-100);
+        
+        this.background = this.add.image(400, 300, 'background-2');
+
+        var config = {
+            image: 'standard-font-2',
+            width: 20,
+            height: 20,
+            chars: Phaser.GameObjects.RetroFont.TEXT_SET1,
+            charsPerRow: 15
+        };
+        this.cache.bitmapFont.add('standard-font-2', Phaser.GameObjects.RetroFont.Parse(this, config));
+
+        config = {
+            image: 'title-font',
+            width: 35,
+            height: 37,
+            chars: Phaser.GameObjects.RetroFont.TEXT_SET3,
+            charsPerRow: 15
+        };
+        this.cache.bitmapFont.add('title-font', Phaser.GameObjects.RetroFont.Parse(this, config));
+
+        this.title = this.add.bitmapText(400, 300, 'title-font', 'PREHISTORIC\nPLATFORMER');
+        this.title.setOrigin(0.5);
+        this.title.setCenterAlign();
+        this.title.setAlpha(0);
+
+        this.text = this.add.bitmapText(400, 400, 'standard-font-2', 'Wcisnij dowolny klawisz');
+        this.text.setOrigin(0.5);
+        this.text.setCenterAlign();
+        this.text.setAlpha(0);
+
+        this.tweens.add({
+            targets: this.title,
+            y: 200,
+            alpha: 1,
+            duration: 3000,
+            ease: 'Power2'
+        });
+        
+        this.tweens.add({
+            targets: this.text,
+            alpha: 1,
+            yoyo: true,
+            duration: 2000,
+            ease: 'Power1',
+            repeat: -1,
+            delay: 3000,
+        });
+        
+        this.input.keyboard.on('keydown', function() {
+            this.music.stop();
+            this.scene.start('GameScene');
+        }, this);
+    }
+
+    update()
+    {
+        if (this.clouds[0].body.x <= -800)
+        {
+            this.clouds[0].setPosition(796, 0);
+            this.clouds[0].setVelocityX(-100);
+        }
+
+        if (this.clouds[1].body.x <= -800)
+        {
+            this.clouds[1].setPosition(796, 0);
+            this.clouds[1].setVelocityX(-100);
+        }
+    }
+}
+
 class GameScene extends Phaser.Scene
 {
     constructor()
@@ -10,7 +115,6 @@ class GameScene extends Phaser.Scene
         this.load.image('background', 'assets/background-1.png');
         this.load.image('invisible-wall', 'assets/enemyWall.png');
         this.load.image('key', 'assets/23.png');
-        this.load.image('ground', 'assets/platform.png');
         this.load.image('health-bar-background', 'assets/health-bar-backgound.png');
         this.load.image('health-bar-top', 'assets/health-bar-top-1.png');
         this.load.image('bar-start', 'assets/bar-start.png');
@@ -51,43 +155,48 @@ class GameScene extends Phaser.Scene
         this.createBumpers();
         this.createFragileBlocks();
         this.createHUD();
-        //this.createPlatforms();
     }
 
     update() 
     {
-        if (this.cursors.right.isDown) 
+        if (!this.player.dead)
         {
-            this.player.setVelocityX(160);
-            this.player.scaleX = 1;
-            this.player.setOffset(this.player.baseOffset, 0);
-        }
-        else if (this.cursors.left.isDown) 
-        {
-            this.player.setVelocityX(-160);
-            this.player.scaleX = -1;
-            this.player.setOffset(this.player.baseOffset + this.player.body.sourceWidth, 0);
-        }
-        else
-            this.player.setVelocityX(0);
+            if (this.cursors.right.isDown) 
+            {
+                this.player.setVelocityX(160);
+                this.player.scaleX = 1;
+                this.player.setOffset(this.player.baseOffset, 0);
+            }
+            else if (this.cursors.left.isDown) 
+            {
+                this.player.setVelocityX(-160);
+                this.player.scaleX = -1;
+                this.player.setOffset(this.player.baseOffset + this.player.body.sourceWidth, 0);
+            }
+            else
+                this.player.setVelocityX(0);
 
-        if ((this.player.body.onFloor() || this.player.body.touching.down))
-        {
-            if (this.cursors.right.isDown || this.cursors.left.isDown)
-                this.player.anims.play('run', true);
-            else
-                this.player.anims.play('idle', true);
-    
-            if (this.cursors.up.isDown)
-                this.player.setVelocityY(-330);
+            if ((this.player.body.onFloor() || this.player.body.touching.down))
+            {
+                if (this.cursors.right.isDown || this.cursors.left.isDown)
+                    this.player.anims.play('run', true);
+                else
+                    this.player.anims.play('idle', true);
+        
+                if (this.cursors.up.isDown)
+                    this.player.setVelocityY(-280);
+            }
+            else 
+            {
+                if (Math.round(this.player.body.velocity.y) < 0)
+                    this.player.anims.play('jump', true);
+                else
+                    this.player.anims.play('fall', true);
+            }
         }
-        else 
-        {
-            if (Math.round(this.player.body.velocity.y) < 0)
-                this.player.anims.play('jump', true);
-            else
-                this.player.anims.play('fall', true);
-        }
+
+        if (this.player.body.x >= 4700)
+            this.finish();
     }
 
     createWorld()
@@ -110,6 +219,8 @@ class GameScene extends Phaser.Scene
         this.layer3.setCollisionBetween(946,947);
         this.layer4.setCollisionBetween(853,856);
 
+        this.finished = false;
+
         this.bgm = this.sound.add('music', {loop: true});
         this.bgm.play();
     }
@@ -123,6 +234,7 @@ class GameScene extends Phaser.Scene
         this.player.body.setSize(52, 68, true);
         this.player.body.offset.y = 0;
         this.player.baseOffset = this.player.body.offset.x;
+        this.player.dead = false;
 
         this.hitSound1 = this.sound.add('hit-1');
         this.hitSound2 = this.sound.add('hit-2');
@@ -130,8 +242,10 @@ class GameScene extends Phaser.Scene
 
         this.physics.add.collider(this.player, this.layer3);
         this.physics.add.collider(this.player, this.layer);
-        this.physics.add.collider(this.player, this.layer4, this.touchObstacle, null, this); // KOLIZJI Z MAPEJ 
+        this.physics.add.collider(this.player, this.layer4, this.touchObstacle, null, this);
     
+        this.player.on('animationcomplete', this.animationPlayerDieComplete, this);
+
         this.anims.create({
             key: 'idle',
             frames: this.anims.generateFrameNumbers('player', { start: 0, end: 4}),
@@ -165,7 +279,7 @@ class GameScene extends Phaser.Scene
             frames: this.anims.generateFrameNumbers('player', { start: 26, end: 32}),
             frameRate: 10,
             repeat: 0
-        })
+        });
 
         this.score = 0;
         this.collectedKeys = 0;
@@ -190,7 +304,6 @@ class GameScene extends Phaser.Scene
         this.cache.bitmapFont.add('standard-font', Phaser.GameObjects.RetroFont.Parse(this, config));
 
         this.add.image(16, 150, 'key').setOrigin(0).setScale(1.5).setScrollFactor(0);
-        //this.keyText = this.add.text(70, 140, 'x 0', {fontSize: '32px', fill: '#000'});
         this.keyText = this.add.bitmapText(70, 140, 'standard-font', '0');
         this.keyText.setScrollFactor(0);
 
@@ -225,14 +338,14 @@ class GameScene extends Phaser.Scene
         });  
         this.anims.create({
             key: 'enemy_1_die',
-            frames: this.anims.generateFrameNumbers('enemy_1', {start: 3, end: 9}),
+            frames: this.anims.generateFrameNumbers('enemy_1', {start: 6, end: 9}),
             frameRate: 10,
             repeat: 0
         });
 
         this.anims.create({
             key: 'enemy_2_run',
-            frames: this.anims.generateFrameNumbers('enemy_2', {start: 0, end: 11}),
+            frames: this.anims.generateFrameNumbers('enemy_2', {start: 6, end: 11}),
             frameRate: 10,
             repeat: -1
         });
@@ -462,16 +575,6 @@ class GameScene extends Phaser.Scene
         fragileBlock.on('animationcomplete', this.animationBlockDestroyComplete, this);
         this.fragileBlocks.add(fragileBlock);
     }
-
-    createPlatforms()
-    {
-        this.platforms = this.physics.add.staticGroup();
-        this.platforms.create(400, 568, 'ground').setScale(2).refreshBody();
-        this.physics.add.collider(this.keys, this.platforms);    
-        this.physics.add.collider(this.player, this.platforms);
-        this.physics.add.collider(this.enemy, this.platforms);
-        this.physics.add.collider(this.treasures, this.platforms);
-    }
     
     enemyTurnLeft(wall, enemy)
     {
@@ -501,30 +604,11 @@ class GameScene extends Phaser.Scene
                 this.scoreText.setText(this.score);
                 enemy.setVelocityX(0);
                 enemy.setVelocityY(-50);
-                player.setVelocityY(-280);
+                player.setVelocityY(-250);
                 enemy.enabled = false;
             }
             else
-            {
                 this.loseHealth();
-                //this.player.setTint(0xff0000);
-                /*
-                this.player.anims.play('hurt');
-                if (this.player.body.touching.left)
-                {
-                    this.player.setVelocityX(200);
-                    this.player.setAccelerationX(-200);
-                }
-                
-                else if (this.player.body.touching.right)
-                {
-                    this.player.setVelocityX(-200);
-                    this.player.setAccelerationX(200);
-                } */
-                //this.physics.pause();
-                //this.player.setTint(0xff0000);
-                //this.gameOver = true;
-            }
         }
     }
 
@@ -584,6 +668,23 @@ class GameScene extends Phaser.Scene
         }
     }
 
+    finish()
+    {
+        if (!this.finished)
+        {
+            this.physics.pause();
+            this.bgm.stop();
+            this.finished = true;
+            this.scene.launch('CreditScene', { score: this.score });
+        }
+    }
+
+    animationPlayerDieComplete(animation, frame, player)
+    {
+        if (animation.key == 'die')
+            this.scene.launch('GameOverScene', { score: this.score });
+    }
+
     animationEnemyDieComplete(animation, frame, enemy)
     {
         if (animation.key == enemy.spriteKey + '_die')
@@ -602,13 +703,6 @@ class GameScene extends Phaser.Scene
         key.disableBody(true, true); 
         this.collectedKeys++;
         this.keyText.setText(this.collectedKeys);
-        /*
-        if (this.keys.countActive(true) === 0)
-        {
-            this.keys.children.iterate(function (child) {    
-                child.enableBody(true, Phaser.Math.Between(300, 790), 150, true, true);
-            });
-        } */
     }
 
     gainHealth()
@@ -641,8 +735,244 @@ class GameScene extends Phaser.Scene
             this.healthPoints--;
             var bars = this.healthBars.getChildren();
             bars[this.healthPoints].visible = false;
-            bars[this.healthPoints - 1].setTexture('bar-end');
+            if (this.healthPoints > 0)
+                bars[this.healthPoints - 1].setTexture('bar-end');
         }
+        else if (!this.player.dead)
+        {
+            this.physics.pause();
+            this.bgm.stop();
+            this.player.dead = true;
+            this.player.anims.play('die');
+        }
+    }
+}
+
+class GameOverScene extends Phaser.Scene
+{
+    constructor()
+    {
+        super({key: 'GameOverScene'});
+    }
+
+    init(data)
+    {
+        this.score = data.score;
+    }
+
+    preload()
+    {
+        this.load.image('black', 'assets/black.png');
+        this.load.audio('gameover-music', 'assets/theme-6.ogg');
+    }
+
+    create()
+    {
+        this.music = this.sound.add('gameover-music', {loop: true});
+        this.music.play();
+
+        this.bg = this.add.tileSprite(400, 300, 800, 600, 'black');
+        this.bg.setAlpha(0);
+
+        var config = {
+            image: 'standard-font-2',
+            width: 20,
+            height: 20,
+            chars: Phaser.GameObjects.RetroFont.TEXT_SET1,
+            charsPerRow: 15
+        };
+        this.cache.bitmapFont.add('standard-font-2', Phaser.GameObjects.RetroFont.Parse(this, config));
+
+        config = {
+            image: 'title-font',
+            width: 35,
+            height: 37,
+            chars: Phaser.GameObjects.RetroFont.TEXT_SET3,
+            charsPerRow: 15
+        };
+        this.cache.bitmapFont.add('title-font', Phaser.GameObjects.RetroFont.Parse(this, config));
+
+        this.title = this.add.bitmapText(400, 100, 'title-font', 'PRZEGRANA');
+        this.title.setOrigin(0.5);
+        this.title.setCenterAlign();
+        this.title.setAlpha(0);
+
+        this.result = this.add.bitmapText(400, 300, 'standard-font', 'Wynik: ' + this.score);
+        this.result.setOrigin(0.5);
+        this.result.setCenterAlign();
+        this.result.setAlpha(0);        
+    
+        this.text = this.add.bitmapText(400, 400, 'standard-font-2', 'Wcisnij dowolny klawisz');
+        this.text.setOrigin(0.5);
+        this.text.setCenterAlign();
+        this.text.setAlpha(0);
+        
+        this.tweens.add({
+            targets: this.bg,
+            alpha: 0.5,
+            duration: 2000,
+            ease: 'Power2'
+        });
+
+        this.tweens.add({
+            targets: this.title,
+            y: 200,
+            alpha: 1,
+            duration: 3000,
+            ease: 'Power2',
+            delay: 2000
+        });
+
+        this.tweens.add({
+            targets: this.result,
+            alpha: 1,
+            duration: 2000,
+            ease: 'Power2',
+            delay: 5000
+        });
+   
+        this.tweens.add({
+            targets: this.text,
+            alpha: 1,
+            yoyo: true,
+            duration: 2000,
+            ease: 'Power1',
+            repeat: -1,
+            delay: 7000,
+        });
+
+        this.input.keyboard.on('keydown', function() {
+            this.music.stop();
+            var scene = this.scene.get('GameScene');
+            scene.scene.restart();
+            this.scene.stop();
+        }, this);
+    }
+
+    update()
+    {
+
+    }
+}
+
+class CreditScene extends Phaser.Scene
+{
+    constructor()
+    {
+        super({key: 'CreditScene'});
+    }
+
+    init(data)
+    {
+        this.score = data.score;
+    }
+
+    preload()
+    {
+        this.load.image('black', 'assets/black.png');
+        this.load.audio('credits-music', 'assets/theme-7.ogg');
+    }
+
+    create()
+    {
+        this.music = this.sound.add('credits-music', {loop: true});
+        this.music.play();
+
+        this.bg = this.add.tileSprite(400, 300, 800, 600, 'black');
+        this.bg.setAlpha(0);
+
+        var config = {
+            image: 'standard-font-2',
+            width: 20,
+            height: 20,
+            chars: Phaser.GameObjects.RetroFont.TEXT_SET1,
+            charsPerRow: 15
+        };
+        this.cache.bitmapFont.add('standard-font-2', Phaser.GameObjects.RetroFont.Parse(this, config));
+
+        config = {
+            image: 'title-font',
+            width: 35,
+            height: 37,
+            chars: Phaser.GameObjects.RetroFont.TEXT_SET3,
+            charsPerRow: 15
+        };
+        this.cache.bitmapFont.add('title-font', Phaser.GameObjects.RetroFont.Parse(this, config));
+
+        this.endRoll = this.add.container(0, 600);
+
+        this.title = this.add.bitmapText(400, 0, 'title-font', 'WYGRANA');
+        this.title.setOrigin(0.5, 0);
+        this.title.setCenterAlign();
+
+        var bigText = this.add.bitmapText(400, 100, 'standard-font', 'Autorzy');
+        bigText.setOrigin(0.5, 0);
+        bigText.setCenterAlign();
+
+        var smallText = this.add.bitmapText(400, 150, 'standard-font-2', 'Islamova Elena\nStefanowska Antonina');
+        smallText.setOrigin(0.5, 0);
+        smallText.setCenterAlign();
+
+        this.endRoll.add([this.title, bigText, smallText]);
+        var bigText = this.add.bitmapText(400, 250, 'standard-font', 'Darmowe materialy');
+        bigText.setOrigin(0.5, 0);
+        bigText.setCenterAlign();
+
+        var smallText = this.add.bitmapText(400, 300, 'standard-font-2', 'Pixel-boy\nPatreon: SparklinLabs');
+        smallText.setOrigin(0.5, 0);
+        smallText.setCenterAlign();
+
+        this.endRoll.add([bigText, smallText]);
+        var smallText = this.add.bitmapText(400, 400, 'standard-font-2', 'Politechnika Białostocka\nWydzial Informatyki\n2018r.');
+        smallText.setOrigin(0.5, 0);
+        smallText.setCenterAlign();
+
+        var bigText = this.add.bitmapText(400, 500, 'standard-font', 'Wynik: ' + this.score);
+        bigText.setOrigin(0.5, 0);
+        bigText.setCenterAlign();
+
+        this.endRoll.add([smallText, bigText]);
+    
+        this.text = this.add.bitmapText(400, 400, 'standard-font-2', 'Wcisnij dowolny klawisz');
+        this.text.setOrigin(0.5);
+        this.text.setCenterAlign();
+        this.text.setAlpha(0);
+
+        this.tweens.add({
+            targets: this.bg,
+            alpha: 0.5,
+            duration: 2000,
+            ease: 'Power2'
+        });
+
+        this.tweens.add({
+            targets: this.endRoll,
+            y: -700,
+            duration: 20000,
+            delay: 2000
+        });    
+      
+        this.tweens.add({
+            targets: this.text,
+            alpha: 1,
+            yoyo: true,
+            duration: 2000,
+            ease: 'Power1',
+            repeat: -1,
+            delay: 20000,
+        });
+
+        this.input.keyboard.on('keydown', function() {
+            this.music.stop();
+            var scene = this.scene.get('GameScene');
+            scene.scene.stop();
+            this.scene.start('WelcomeScene');
+        }, this);
+    }
+
+    update()
+    {
+
     }
 }
 
@@ -657,7 +987,7 @@ var config = {
             debug: false
         }
     },
-    scene: [GameScene]
+    scene: [ WelcomeScene, GameScene, GameOverScene, CreditScene ]
 };
 
 var game = new Phaser.Game(config);
